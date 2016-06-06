@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ajxp_plugin  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="file:../core.ajaxplorer/ajxp_registry.xsd" name="download_deps" enabled="false" label="CONF_MESSAGE[Download with Dependencies Plugin]" description="CONF_MESSAGE[This plugin allows to download source files with dependencies, uses RenderChan to build dependencies tree.]" >
+	<plugin_info>
+		<plugin_author>Ivan Mahonin</plugin_author>
+		<plugin_uri>http://morevnaproject.org</plugin_uri>
+		<core_relation packaged="false" />
+	</plugin_info>
+
+    <server_settings>
+        <global_param name="RENDERCHAN_URL_TEMPLATE" type="string" label="CONF_MESSAGE[RenderChan url template]" description="CONF_MESSAGE[Filename will inserts info this template instead of the '%s' tocken]" mandatory="true" default="http://127.0.0.1:8080/%s"/>
+        <global_param name="RENDERCHAN_LOCAL_ROOT" type="string" label="CONF_MESSAGE[Local RenderChan root]" description="CONF_MESSAGE[Path to RenderChan root folder in local file system]" mandatory="true" default="/var/www/pydio-core/data/personal/admin/"/>
+        <global_param name="RENDERCHAN_REMOTE_ROOT" type="string" label="CONF_MESSAGE[Remote RenderChan root]" description="CONF_MESSAGE[HTTP-path to RenderChan root folder]" mandatory="false" default=""/>
+    </server_settings>
+
+    <client_settings>
+        <resources>
+            <i18n namespace="download_deps" path="plugins/action.download_deps/res/i18n"/>
+        </resources>
+    </client_settings>
+
+    <registry_contributions>
+        <actions>
+            <action name="download-deps">
+                <gui src="" text="download_deps.1" title="download_deps.2" iconClass="icon-download-alt">
+                    <context dir="true" recycle="false" selection="true" actionBar="false" contextMenu="true" actionBarGroup="more"/>
+                    <selectionContext dir="false" file="true" recycle="false" unique="true" />
+                </gui>
+                <processing>
+                    <clientCallback><![CDATA[
+                        var selection = ajaxplorer.getContextHolder().getSelectedNodes();
+                        if (selection.size() == 1 && $("download_form")) {
+                            var form = $('download_form');
+                            form.action = window.ajxpServerAccessPath;
+                            form.secure_token.value = Connexion.SECURE_TOKEN;
+                            form.select("input").each( function(input) {
+                                if (input.name == 'get_action') input.value = 'download-deps'; else
+                                    if (input.name != 'secure_token') input.remove();
+                            });
+                            form.insert(new Element('input', {type:'hidden', name:"file", value:selection[0].getPath()}));
+                            try { form.submit(); } catch(e) { }
+                        }
+                    ]]></clientCallback>
+                    <serverCallback methodName="receiveAction" />
+                </processing>
+            </action>
+        </actions>
+    </registry_contributions>
+    <class_definition filename="plugins/action.download_deps/class.PluginDownloadDeps.php" classname="PluginDownloadDeps"/>
+</ajxp_plugin>
