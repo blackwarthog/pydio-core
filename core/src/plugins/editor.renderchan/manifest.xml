@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<editor id="editor.renderchan" enabled="false" openable="true" order="11" iconClass="icon-picture" previewProvider="true"
+        formId="diaporama_box" text="328" title="329" icon="frame_image.png" className="RenderchanPreviewer"
+        mimes="sif,sifz,sfg,blend" label="CONF_MESSAGE[Renderchan]"
+        description="CONF_MESSAGE[This plugin shows pregenerated thumbnails and previews]"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="file:../core.ajaxplorer/ajxp_registry.xsd">
+    <class_definition filename="plugins/editor.renderchan/class.RenderchanPreviewer.php" classname="RenderchanPreviewer"/>
+    <client_settings>
+        <resources>
+            <js file="plugins/editor.renderchan/class.RenderchanPreviewer.js" className="RenderchanPreviewer"/>
+            <i18n namespace="renderchan_editor" path="plugins/editor.renderchan/i18n"/>
+        </resources>
+    </client_settings>
+	<server_settings>
+		<global_param name="SOURCE_PATH" type="string" label="CONF_MESSAGE[Source path]" description="CONF_MESSAGE[Path to source files at the server]" default="" />
+		<global_param name="THUMB_PATH" type="string" label="CONF_MESSAGE[Thumbnails path]" description="CONF_MESSAGE[Path to folder with pregenerated thumbnails]" default="" />
+		<global_param name="THUMB_SUFFIX" type="string" label="CONF_MESSAGE[Thumbnails suffix]" description="CONF_MESSAGE[This suffix appends to name of source file to make thumbnail filename]" default=".thumb.png" />
+		<global_param name="PREVIEW_PATH" type="string" label="CONF_MESSAGE[Preview path]" description="CONF_MESSAGE[Path to folder with pregenerated previews]" default="" />
+		<global_param name="PREVIEW_SUFFIX" type="string" label="CONF_MESSAGE[Preview suffix]" description="CONF_MESSAGE[This suffix appends to name of source file to make preview filename]" default=".preview.png" />
+	</server_settings>
+	<registry_contributions>
+		<actions>
+			<action name="renderchan_get_thumbnail" contentTypedProvider="true">
+				<processing>
+					<serverCallback methodName="switchAction" restParams="/file+">
+                        <input_param name="file" type="AJXP_NODE" description="Path to the file"/>
+                        <input_param name="json" type="boolean" description="Return description of preview in JSON-format"/>
+                        <output type="json|file" description="Depending on the mode, will return either directly an image (thumbnail), or a json structure containing link to thumbnail."/>
+					</serverCallback>
+				</processing>
+			</action>
+			<action name="renderchan_get_preview">
+				<processing>
+					<serverCallback methodName="switchAction" restParams="/file+">
+                        <input_param name="file" type="AJXP_NODE" description="Path to the file"/>
+                        <input_param name="json" type="boolean" description="Return description of preview in JSON-format"/>
+                        <output type="json|file" description="Depending on the mode, will return either directly an image (preview), or a json structure containing link to preview."/>
+					</serverCallback>
+				</processing>
+			</action>
+		</actions>
+	</registry_contributions>
+	<dependencies>
+		<pluginResources pluginName="editor.diaporama"/>
+		<!-- Stream Wrapper must be implemented -->
+		<activePlugin pluginName="access.AJXP_STREAM_PROVIDER"/>
+	</dependencies>
+</editor>
