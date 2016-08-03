@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <editor id="editor.renderchan" enabled="false" openable="true" order="11" iconClass="icon-picture" previewProvider="true"
         formId="diaporama_box" text="328" title="329" icon="frame_image.png" className="RenderchanPreviewer"
-        mimes="ai,avi,blend,bmp,cdr,cel,dcm,dds,dicom,eps,fit,fits,flc,fli,g3,ico,kra,mov,mp4,mpg,ora,pbm,pcc,pcl,pcx,pdf,pgm,pnm,ppm,ps,psd,psp,sif,sifz,svg,svgz,tiff,vsd,wmf,xbm,xcf,xjt,xwd" label="CONF_MESSAGE[Renderchan]"
+        mimes="mime_folder,ai,avi,blend,bmp,cdr,cel,dcm,dds,dicom,eps,fit,fits,flc,fli,g3,ico,kra,mov,mp4,mpg,ora,pbm,pcc,pcl,pcx,pdf,pgm,pnm,png,ppm,ps,psd,psp,sif,sifz,svg,svgz,tiff,vsd,wmf,xbm,xcf,xjt,xwd" label="CONF_MESSAGE[Renderchan]"
         description="CONF_MESSAGE[This plugin shows pregenerated thumbnails and previews]"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="file:../core.ajaxplorer/ajxp_registry.xsd">
     <class_definition filename="plugins/editor.renderchan/class.RenderchanPreviewer.php" classname="RenderchanPreviewer"/>
