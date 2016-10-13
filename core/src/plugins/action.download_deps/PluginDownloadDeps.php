@@ -21,26 +21,30 @@
 
 defined('AJXP_EXEC') or die( 'Access not allowed');
 
-/**
- * TODO: Rewrite this. Simple non-fonctionnal plugin for demoing pre/post processes hooks
- * @package AjaXplorer_Plugins
- * @subpackage Action
- */
-class PluginDownloadDeps extends AJXP_Plugin
+use \Psr\Http\Message\ServerRequestInterface;
+use \Psr\Http\Message\ResponseInterface;
+
+use Pydio\Access\Core\MetaStreamWrapper;
+use Pydio\Access\Core\Model\UserSelection;
+use Pydio\Core\Controller\Controller;
+use Pydio\Core\Exception\PydioException;
+use Pydio\Core\Model\ContextInterface;
+use Pydio\Core\PluginFramework\Plugin;
+use Pydio\Core\Utils\Vars\InputFilter;
+
+class PluginDownloadDeps extends Plugin
 {
-	/**
-     * @param String $action
-     * @param Array $httpVars
-     * @param Array $fileVars
-     * @return void
-     */
-    public function receiveAction($action, $httpVars, $fileVars)
+    public function receiveAction(ServerRequestInterface &$requestInterface, ResponseInterface &$responseInterface)
     {
+        $action           = $requestInterface->getAttribute("action");
+        $httpVars         = $requestInterface->getParsedBody();
+        $contextInterface = $requestInterface->getAttribute("ctx");
+
         if ($action == "download-deps") {
         	// config
-        	$url_template = $this->getFilteredOption("RENDERCHAN_URL_TEMPLATE");
-        	$local_root = $this->getFilteredOption("RENDERCHAN_LOCAL_ROOT");
-        	$remote_root = $this->getFilteredOption("RENDERCHAN_REMOTE_ROOT");
+        	$url_template = $this->getContextualOption($contextInterface, "RENDERCHAN_URL_TEMPLATE");
+        	$local_root   = $this->getContextualOption($contextInterface, "RENDERCHAN_LOCAL_ROOT");
+        	$remote_root  = $this->getContextualOption($contextInterface, "RENDERCHAN_REMOTE_ROOT");
         	
         	if (substr($server, -1) == '/')
         		$server .= substr($server, 0, strlen($server) - 1);
@@ -51,20 +55,22 @@ class PluginDownloadDeps extends AJXP_Plugin
         	if (substr($remote_root, 0, 1) == '/')
        			$remote_root = substr($remote_root, 1);
         	
-       		// 'file' argument
-        	$file = $httpVars['file'];
+            $selection = UserSelection::fromContext($contextInterface, $httpVars);
+            $file = $selection->getUniqueFile();
         	if (strpos($file, "base64encoded:") === 0)
         		$file = base64_decode(array_pop(explode(':', $file, 2)));
-        	$file = AJXP_Utils::securePath($file);
-        	$file = AJXP_Utils::decodeSecureMagic($file);
+        	$file = InputFilter::securePath($file);
+        	$file = InputFilter::decodeSecureMagic($file);
         	if (substr($file, 0, 1) == '/' || substr($file, 0, 1) == '\\')
         		$file = substr($file, 1);
         	
-        	$dir = AJXP_MetaStreamWrapper::getRealFSReference("pydio://".ConfService::getCurrentRepositoryId()."/");
+            $userId=$contextInterface->getUser()->getId();
+            $repoId=$contextInterface->getRepositoryId();
+            $dir = MetaStreamWrapper::getRealFSReference("pydio://".$userId."@".$repoId."/");
         	
         	// path
 			if ($local_root != substr($dir.$file, 0, strlen($local_root)))
-				throw new Exception("Cannot request dependencies for file from outside of renderchan local root");
+				throw new PydioException("Cannot request dependencies for file from outside of renderchan local root");
 			$remote_file = $remote_root.substr($dir.$file, strlen($local_root));
 			
 			// ask renderchan
@@ -74,10 +80,10 @@ class PluginDownloadDeps extends AJXP_Plugin
 			
 			// parse reply
 			if (!is_object($reply) || !isset($reply->files) || !is_array($reply->files))
-				throw new Exception("Wrong reply from renderchan");
+				throw new PydioException("Wrong reply from renderchan");
 			$index = 0;
-			$newHttpVars = array();
-			$newHttpVars["archive_name"] = basename($file).".zip";
+			$newParams = array();
+			$newParams["archive_name"] = basename($file).".zip";
 			foreach($reply->files as $f) {
 				if (!is_object($f) || !isset($f->source) || !is_string($f->source)) continue;
 				$f = $f->source;
@@ -94,12 +100,13 @@ class PluginDownloadDeps extends AJXP_Plugin
         		if ($dir != substr($f, 0, strlen($dir))) continue;
 				$f = substr($f, strlen($dir));
 				
-				$newHttpVars['file_'.$index] = '/'.$f;
+				$newParams['file_'.$index] = '/'.$f;
 				++$index;
 			}
-				
+			
 			// call download
-			AJXP_Controller::findActionAndApply("download", $newHttpVars, array());
+            $downloadRequest = Controller::executableRequest($contextInterface, "download", $newParams);
+            $responseInterface = Controller::run($downloadRequest);
         }
     }
 }

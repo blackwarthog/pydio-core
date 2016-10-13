@@ -45,5 +45,5 @@
             </action>
         </actions>
     </registry_contributions>
-    <class_definition filename="plugins/action.download_deps/class.PluginDownloadDeps.php" classname="PluginDownloadDeps"/>
+    <class_definition filename="plugins/action.download_deps/PluginDownloadDeps.php" classname="PluginDownloadDeps"/>
 </ajxp_plugin>
