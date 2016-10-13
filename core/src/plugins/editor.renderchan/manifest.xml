@@ -4,7 +4,7 @@
         mimes="mime_folder,ai,avi,blend,bmp,cdr,cel,dcm,dds,dicom,eps,fit,fits,flc,fli,g3,ico,kra,mov,mp4,mpg,ora,pbm,pcc,pcl,pcx,pdf,pgm,pnm,png,ppm,ps,psd,psp,sif,sifz,svg,svgz,tiff,vsd,wmf,xbm,xcf,xjt,xwd" label="CONF_MESSAGE[Renderchan]"
         description="CONF_MESSAGE[This plugin shows pregenerated thumbnails and previews]"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="file:../core.ajaxplorer/ajxp_registry.xsd">
-    <class_definition filename="plugins/editor.renderchan/class.RenderchanPreviewer.php" classname="RenderchanPreviewer"/>
+    <class_definition filename="plugins/editor.renderchan/RenderchanPreviewer.php" classname="RenderchanPreviewer"/>
     <client_settings>
         <resources>
             <js file="plugins/editor.renderchan/class.RenderchanPreviewer.js" className="RenderchanPreviewer"/>

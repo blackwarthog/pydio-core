@@ -21,34 +21,39 @@
 
 defined('AJXP_EXEC') or die( 'Access not allowed');
 
-/**
- * Encapsulates calls to Image Magick to extract JPG previews of PDF, PSD, TIFF, etc.
- * @package AjaXplorer_Plugins
- * @subpackage Editor
- */
-class RenderchanPreviewer extends AJXP_Plugin
+use Pydio\Access\Core\MetaStreamWrapper;
+use Pydio\Access\Core\Model\UserSelection;
+use Pydio\Core\Model\ContextInterface;
+use Pydio\Core\PluginFramework\Plugin;
+use Pydio\Core\Utils\Vars\InputFilter;
+use Pydio\Core\Utils\Vars\StatHelper;
+
+class RenderchanPreviewer extends Plugin
 {
-    public function switchAction($action, $httpVars, $filesVars)
+    public function switchAction($action, $httpVars, $filesVars, ContextInterface $contextInterface)
     {
-        $sourcePath    = $this->getFilteredOption("SOURCE_PATH");
-        $thumbPath     = $this->getFilteredOption("THUMB_PATH");
-        $thumbSuffix   = $this->getFilteredOption("THUMB_SUFFIX");
-        $previewPath   = $this->getFilteredOption("PREVIEW_PATH");
-        $previewSuffix = $this->getFilteredOption("PREVIEW_SUFFIX");
+        $sourcePath    = $this->getContextualOption($contextInterface, "SOURCE_PATH");
+        $thumbPath     = $this->getContextualOption($contextInterface, "THUMB_PATH");
+        $thumbSuffix   = $this->getContextualOption($contextInterface, "THUMB_SUFFIX");
+        $previewPath   = $this->getContextualOption($contextInterface, "PREVIEW_PATH");
+        $previewSuffix = $this->getContextualOption($contextInterface, "PREVIEW_SUFFIX");
         
         if (!empty($sourcePath) && substr($sourcePath,  -1) != '/' && substr($sourcePath,  -1) != '\\') $sourcePath  .= '/';
         if (!empty($thumbPath)  && substr($thumbPath,   -1) != '/' && substr($thumbPath,   -1) != '\\') $thumbPath   .= '/';
         if (!empty(previewPath) && substr($previewPath, -1) != '/' && substr($previewPath, -1) != '\\') $previewPath .= '/';
         
-        $file = $httpVars['file'];
+        $selection = UserSelection::fromContext($contextInterface, $httpVars);
+        $file = $selection->getUniqueFile();
         if (strpos($file, "base64encoded:") === 0)
             $file = base64_decode(array_pop(explode(':', $file, 2)));
-        $file = AJXP_Utils::securePath($file);
-        $file = AJXP_Utils::decodeSecureMagic($file);
+        $file = InputFilter::securePath($file);
+        $file = InputFilter::decodeSecureMagic($file);
         if (substr($file, 0, 1) == '/' || substr($file, 0, 1) == '\\')
             $file = substr($file, 1);
         
-        $root = AJXP_MetaStreamWrapper::getRealFSReference("pydio://".ConfService::getCurrentRepositoryId()."/");
+        $userId=$contextInterface->getUser()->getId();
+        $repoId=$contextInterface->getRepositoryId();
+        $root = MetaStreamWrapper::getRealFSReference("pydio://".$userId."@".$repoId."/");
         $file_full = $root.$file;
         
         if (!empty($sourcePath) && substr($file_full, 0, strlen($sourcePath)) != $sourcePath)
@@ -92,7 +97,7 @@ class RenderchanPreviewer extends AJXP_Plugin
             $file_small = !empty($sourcePath) && !empty($path)
                         ? $path . substr($file_full, strlen($sourcePath)) . $suffix
                         : $file_full . $suffix;
-        	header("Content-Type: image/jpeg; name=\"".basename($file_small)."\"");
+        	header("Content-Type: ".StatHelper::getImageMimeType(basename($file_small))."; name=\"".basename($file_small)."\"");
             header('Cache-Control: public');
             header("Pragma:");
             header("Last-Modified: " . gmdate("D, d M Y H:i:s", time()-10000) . " GMT");
