@@ -30,17 +30,67 @@ use Pydio\Core\Utils\Vars\StatHelper;
 
 class RenderchanPreviewer extends Plugin
 {
+	private function searchPath($currentpath, $root, $fullpath, $dirs, $suffixes)
+	{
+		// search in subdirectories by $dirs array
+		if ($currentpath !== $fullpath)
+		{
+			$separator = strlen($currentpath) > 0 ? substr($currentpath, strlen($currentpath) - 1) : '';
+			if ($separator != '\\') $separator = '/';
+			foreach($dirs as $dir)
+			{
+				  
+				$subpath = $currentpath . $dir . $separator . substr($fullpath, strlen($currentpath));
+				foreach($suffixes as $suffix)
+				{
+					if (file_exists($subpath.$suffix))
+						return $subpath.$suffix;
+				}
+			}
+		}
+		
+		// search parent directory
+		if (strlen($currentpath) > strlen($root))
+		{
+			$pos_a = strrpos($currentpath, '/', -2);
+			$pos_b = strrpos($currentpath, '\\', -2);
+			$pos = $pos_a === false ? $pos_b : ($pos_b === false ? $pos_a : max($pos_a, $pos_b));
+			if ($pos !== false && !empty($dirs))
+			{
+				$result = $this->searchPath(substr($currentpath, 0, $pos + 1), $root, $fullpath, $dirs, $suffixes);
+				if ($result !== "") return $result;
+			}
+		}
+		
+		// search in current directory
+		if ($currentpath === $fullpath)
+		{
+			foreach($suffixes as $suffix)
+				if (file_exists($currentpath.$suffix))
+					return $currentpath.$suffix;
+		}
+
+		return "";
+	}
+	
+	private function splitNames($list)
+	{
+		$names = array();
+		foreach(explode(',', $list) as $sub)
+		{
+			$s = trim($sub);
+			if ($s !== "")
+				array_push($names, $s);
+		}
+		return $names;
+	}
+	
     public function switchAction($action, $httpVars, $filesVars, ContextInterface $contextInterface)
     {
-        $sourcePath    = $this->getContextualOption($contextInterface, "SOURCE_PATH");
-        $thumbPath     = $this->getContextualOption($contextInterface, "THUMB_PATH");
-        $thumbSuffix   = $this->getContextualOption($contextInterface, "THUMB_SUFFIX");
-        $previewPath   = $this->getContextualOption($contextInterface, "PREVIEW_PATH");
-        $previewSuffix = $this->getContextualOption($contextInterface, "PREVIEW_SUFFIX");
-        
-        if (!empty($sourcePath) && substr($sourcePath,  -1) != '/' && substr($sourcePath,  -1) != '\\') $sourcePath  .= '/';
-        if (!empty($thumbPath)  && substr($thumbPath,   -1) != '/' && substr($thumbPath,   -1) != '\\') $thumbPath   .= '/';
-        if (!empty(previewPath) && substr($previewPath, -1) != '/' && substr($previewPath, -1) != '\\') $previewPath .= '/';
+    	$thumbDirs       = $this->splitNames( $this->getContextualOption($contextInterface, "THUMB_DIRS") );
+        $thumbSuffixes   = $this->splitNames( $this->getContextualOption($contextInterface, "THUMB_SUFFIXES") );
+        $previewDirs     = $this->splitNames( $this->getContextualOption($contextInterface, "PREVIEW_DIRS") );
+        $previewSuffixes = $this->splitNames( $this->getContextualOption($contextInterface, "PREVIEW_SUFFIXES") );
         
         $selection = UserSelection::fromContext($contextInterface, $httpVars);
         $file = $selection->getUniqueFile();
@@ -56,31 +106,26 @@ class RenderchanPreviewer extends Plugin
         $root = MetaStreamWrapper::getRealFSReference("pydio://".$userId."@".$repoId."/");
         $file_full = $root.$file;
         
-        if (!empty($sourcePath) && substr($file_full, 0, strlen($sourcePath)) != $sourcePath)
-            return false;
-        
-        $path   = "";
-        $suffix = "";
+        $dirs     = array();
+        $suffixes = array();
         if ($action == "renderchan_get_thumbnail") {
-            $path   = $thumbPath;
-            $suffix = $thumbSuffix;
+            $dirs     = $thumbDirs;
+            $suffixes = $thumbSuffixes;
         } else
         if ($action == "renderchan_get_preview") {
-            $path   = $previewPath;
-            $suffix = $previewSuffix;
+            $dirs   = $previewDirs;
+            $suffixes = $previewSuffixes;
         } else {
             return false;
         }
         
         if (isSet($httpVars["json"]) && $httpVars["json"]) { 
-            $files = array();
+        	$files = array();
             $list = scandir(dirname($file_full));
             foreach($list as $f) {
                 if ($f != "." && $f != "..") {
                     $f_full = dirname($file_full) . DIRECTORY_SEPARATOR . $f;
-                    $f_small = !empty($sourcePath) && !empty($path)
-                             ? $path . substr($f_full, strlen($sourcePath)) . $suffix
-                             : $f_full . $suffix;
+                    $f_small = $this->searchPath($f_full, "/", $f_full, $dirs, $suffixes);
                     if (file_exists($f_small)) {
                         array_push($files, array(
                             'file' => DIRECTORY_SEPARATOR . dirname($file) . DIRECTORY_SEPARATOR . $f,
@@ -94,11 +139,9 @@ class RenderchanPreviewer extends Plugin
             print(json_encode($files));
             return false;
         } else {
-            $file_small = !empty($sourcePath) && !empty($path)
-                        ? $path . substr($file_full, strlen($sourcePath)) . $suffix
-                        : $file_full . $suffix;
+        	$file_small = $this->searchPath($file_full, "/", $file_full, $dirs, $suffixes);
         	header("Content-Type: ".StatHelper::getImageMimeType(basename($file_small))."; name=\"".basename($file_small)."\"");
-            header('Cache-Control: public');
+        	header('Cache-Control: public');
             header("Pragma:");
             header("Last-Modified: " . gmdate("D, d M Y H:i:s", time()-10000) . " GMT");
             header("Expires: " . gmdate("D, d M Y H:i:s", time()+5*24*3600) . " GMT");

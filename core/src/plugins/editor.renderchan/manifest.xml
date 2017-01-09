@@ -12,11 +12,10 @@
         </resources>
     </client_settings>
 	<server_settings>
-		<global_param name="SOURCE_PATH" type="string" label="CONF_MESSAGE[Source path]" description="CONF_MESSAGE[Path to source files at the server]" default="" />
-		<global_param name="THUMB_PATH" type="string" label="CONF_MESSAGE[Thumbnails path]" description="CONF_MESSAGE[Path to folder with pregenerated thumbnails]" default="" />
-		<global_param name="THUMB_SUFFIX" type="string" label="CONF_MESSAGE[Thumbnails suffix]" description="CONF_MESSAGE[This suffix appends to name of source file to make thumbnail filename]" default=".thumb.png" />
-		<global_param name="PREVIEW_PATH" type="string" label="CONF_MESSAGE[Preview path]" description="CONF_MESSAGE[Path to folder with pregenerated previews]" default="" />
-		<global_param name="PREVIEW_SUFFIX" type="string" label="CONF_MESSAGE[Preview suffix]" description="CONF_MESSAGE[This suffix appends to name of source file to make preview filename]" default=".preview.png" />
+		<global_param name="THUMB_DIRS" type="string" label="CONF_MESSAGE[Thumnail folders]" description="CONF_MESSAGE[Comma separated list of folder names with thumbnails]" default="" />
+		<global_param name="THUMB_SUFFIXES" type="string" label="CONF_MESSAGE[Thumbnails suffixes]" description="CONF_MESSAGE[Comma separated list of thumbnail filename suffixes]" default=".thumb.png" />
+		<global_param name="PREVIEW_DIRS" type="string" label="CONF_MESSAGE[Preview folders]" description="CONF_MESSAGE[Comma separated list of folder names with previews]" default="" />
+		<global_param name="PREVIEW_SUFFIXES" type="string" label="CONF_MESSAGE[Preview suffixes]" description="CONF_MESSAGE[Comma separated list of preview filename suffixes]" default=".preview.png" />
 	</server_settings>
 	<registry_contributions>
 		<actions>
